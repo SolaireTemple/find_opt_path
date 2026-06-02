@@ -11,9 +11,11 @@ struct MazeConfig {
     std::vector<Point> obstacleShape;
     std::vector<Point> obstacleRoute;
     int obstacleMode;      // 0,1,2
-    int obstacleSpeed;     // скорость
+    int obstacleSpeed;
+    int startX, startY;    // новые поля
+    int exitX, exitY;      // новые поля
 };
 
 bool loadMazeConfig(const std::string& filename, MazeConfig& config);
 
-#endif // CONFIGPARSER_H
+#endif

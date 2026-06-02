@@ -1,4 +1,6 @@
 size 8
+start 0 0
+exit 7 7
 walls
 0 0 0 0 0 0 0 0
 0 1 1 0 1 1 1 0
@@ -21,5 +23,5 @@ obstacle_route
 3 5
 3 6
 
-mode back_and_forth
+mode 0
 speed 1

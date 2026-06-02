@@ -24,7 +24,7 @@ namespace std {
     };
 }
 
-//Поиск пути (волновой BFS с учётом времени и размера препятствия)
+//Поиск пути 
 std::vector<State> findPath(const QuadTree& maze, int size,
     const Point& start, const Point& exit,
     const Obstacle& obstacle, int maxTime = 500) {
@@ -84,15 +84,34 @@ std::vector<State> findPath(const QuadTree& maze, int size,
     return {};
 }
 
-// ---------- Главная функция ----------
-int main() {
-    std::string filename;
-    std::cout << "Введите имя файла конфигурации: ";
-    std::cin >> filename;
+// Функция для генерации JSON строки
+std::string escape_json(const std::string& s) {
+    std::string out;
+    for (char c : s) {
+        switch (c) {
+        case '"': out += "\\\""; break;
+        case '\\': out += "\\\\"; break;
+        case '\b': out += "\\b"; break;
+        case '\f': out += "\\f"; break;
+        case '\n': out += "\\n"; break;
+        case '\r': out += "\\r"; break;
+        case '\t': out += "\\t"; break;
+        default: out += c; break;
+        }
+    }
+    return out;
+}
+
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <config_file.txt>" << std::endl;
+        return 1;
+    }
+    std::string filename = argv[1];
 
     MazeConfig config;
     if (!loadMazeConfig(filename, config)) {
-        std::cerr << "Ошибка загрузки конфигурации." << std::endl;
+        std::cerr << "Error loading configuration." << std::endl;
         return 1;
     }
 
@@ -100,21 +119,48 @@ int main() {
     Obstacle obstacle(config.obstacleShape, config.obstacleRoute,
         config.obstacleMode, config.obstacleSpeed);
 
-    Point start(0, 0);
-    Point exit(config.size - 1, config.size - 1);
+    Point start(config.startX, config.startY);
+    Point exit(config.exitX, config.exitY);
 
-    std::cout << "Поиск оптимального пути с учётом движущегося препятствия...\n";
+    
+    if (maze.isWall(start.x, start.y) || maze.isWall(exit.x, exit.y)) {
+        std::cerr << "Start or exit is a wall!" << std::endl;
+        return 1;
+    }
+
     auto path = findPath(maze, config.size, start, exit, obstacle, 500);
 
-    if (path.empty()) {
-        std::cout << "Путь не найден.\n";
-    }
-    else {
-        std::cout << "Путь найден. Время выхода: " << path.back().time << "\n";
-        for (const auto& s : path) {
-            std::cout << "t=" << s.time << ": (" << s.x << "," << s.y << ")\n";
+
+    // Начинаем вывод JSON
+    std::cout << "{\n";
+    std::cout << "  \"path\": [\n";
+    if (!path.empty()) {
+        for (size_t i = 0; i < path.size(); ++i) {
+            std::cout << "    {\"x\":" << path[i].x << ",\"y\":" << path[i].y << ",\"t\":" << path[i].time << "}";
+            if (i != path.size() - 1) std::cout << ",";
+            std::cout << "\n";
         }
     }
+    std::cout << "  ],\n";
+
+    // Вычисляем позиции препятствия для каждого момента времени от 0 до времени выхода
+    std::cout << "  \"obstacle_positions\": [\n";
+    if (!path.empty()) {
+        int exit_time = path.back().time;
+        for (int t = 0; t <= exit_time; ++t) {
+            auto cells = obstacle.getOccupiedCells(t);
+            std::cout << "    {\"t\":" << t << ",\"cells\":[";
+            for (size_t i = 0; i < cells.size(); ++i) {
+                std::cout << "[" << cells[i].x << "," << cells[i].y << "]";
+                if (i != cells.size() - 1) std::cout << ",";
+            }
+            std::cout << "]}";
+            if (t != exit_time) std::cout << ",";
+            std::cout << "\n";
+        }
+    }
+    std::cout << "  ]\n";
+    std::cout << "}\n";
 
     return 0;
 }

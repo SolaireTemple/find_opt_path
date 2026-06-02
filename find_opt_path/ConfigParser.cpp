@@ -9,14 +9,23 @@ bool loadMazeConfig(const std::string& filename, MazeConfig& config) {
         std::cerr << "Не удалось открыть файл: " << filename << std::endl;
         return false;
     }
-    config.obstacleMode = 1;   // cyclic по умолчанию
+    // Значения по умолчанию
+    config.obstacleMode = 1;   // cyclic
     config.obstacleSpeed = 1;
     config.size = 0;
+    config.startX = 0;
+    config.startY = 0;
+    config.exitX = 0;
+    config.exitY = 0;
 
     std::string token;
     while (file >> token) {
         if (token == "size") {
             file >> config.size;
+            if (config.size > 0) {
+                config.exitX = config.size - 1;
+                config.exitY = config.size - 1;
+            }
         }
         else if (token == "walls") {
             if (config.size == 0) {
@@ -46,27 +55,27 @@ bool loadMazeConfig(const std::string& filename, MazeConfig& config) {
         }
         else if (token == "obstacle_route") {
             config.obstacleRoute.clear();
-            // Пропускаем пробелы и читаем первую строку маршрута
-            file >> std::ws;
-            // Читаем всю строку целиком (остаток текущей строки)
-            std::string line;
-            std::getline(file, line);
-            std::istringstream lineStream(line);
             int x, y;
-            while (lineStream >> x >> y) {
+            // Читаем все пары чисел, пока они есть
+            while (file >> x >> y) {
                 config.obstacleRoute.push_back(Point(x, y));
             }
+            // Сбрасываем состояние потока, чтобы продолжить чтение остальных секций
+            file.clear();
         }
         else if (token == "mode") {
-            std::string modeStr;
-            file >> modeStr;
-            if (modeStr == "once") config.obstacleMode = 0;
-            else if (modeStr == "cyclic") config.obstacleMode = 1;
-            else if (modeStr == "back_and_forth") config.obstacleMode = 2;
-            else config.obstacleMode = 1;
+            int modeInt;
+            file >> modeInt;
+            config.obstacleMode = modeInt;
         }
         else if (token == "speed") {
             file >> config.obstacleSpeed;
+        }
+        else if (token == "start") {
+            file >> config.startX >> config.startY;
+        }
+        else if (token == "exit") {
+            file >> config.exitX >> config.exitY;
         }
     }
 
@@ -74,5 +83,14 @@ bool loadMazeConfig(const std::string& filename, MazeConfig& config) {
         std::cerr << "Ошибка: не задан размер или стены лабиринта" << std::endl;
         return false;
     }
+
+    
+    std::cerr << "=== DEBUG ===" << std::endl;
+    std::cerr << "Mode from config: " << config.obstacleMode << std::endl;
+    std::cerr << "Route size: " << config.obstacleRoute.size() << std::endl;
+    for (auto& p : config.obstacleRoute)
+        std::cerr << "  " << p.x << "," << p.y << std::endl;
+    std::cerr << "==============" << std::endl;
+
     return true;
 }
