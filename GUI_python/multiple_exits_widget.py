@@ -193,13 +193,19 @@ class MultipleExitsWidget(QWidget):
         self.anim_current_step = 0
         self.anim_total_steps = steps
         self.clear_layout(self.display_layout)
-        # Растяжка сверху
+
+        # Вертикальное центрирование
         self.display_layout.addStretch()
-        # Горизонтальный контейнер с весами
+
+        # Горизонтальный контейнер с ограничением ширины 40%
         h_container = QWidget()
         h_layout = QHBoxLayout(h_container)
         h_layout.setAlignment(Qt.AlignCenter)
-        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_layout.setSpacing(15)  # расстояние между картами
+
+        # Боковые растяжки: 3 + 4 + 3 = 10 частей, центральная часть = 40%
+        h_layout.addStretch(3)
+
         self.anim_widgets = []
         for idx, mat in enumerate(self.anim_matrices):
             col_layout = QVBoxLayout()
@@ -209,11 +215,15 @@ class MultipleExitsWidget(QWidget):
             col_layout.addWidget(label)
             widget = MatrixWidget(mat)
             col_layout.addWidget(widget)
-            h_layout.addLayout(col_layout, 1)
+            h_layout.addLayout(col_layout, 4)  # каждая карта получает равную долю в 40%
             self.anim_widgets.append(widget)
+
+        h_layout.addStretch(3)
         h_container.setLayout(h_layout)
+
         self.display_layout.addWidget(h_container, 1)
         self.display_layout.addStretch()
+
         self.timer_stage1.start(300)
         self.btn_stage2.setEnabled(False)
         self.btn_stage3.setEnabled(False)
@@ -247,18 +257,30 @@ class MultipleExitsWidget(QWidget):
             return
         self.W0 = intersect(self.stage_matrices)
         self.clear_layout(self.display_layout)
+
         self.display_layout.addStretch()
-        container = QWidget()
-        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        v_layout = QVBoxLayout(container)
+
+        # Горизонтальный контейнер для одиночной карты с ограничением 40%
+        h_container = QWidget()
+        h_layout = QHBoxLayout(h_container)
+        h_layout.setAlignment(Qt.AlignCenter)
+        h_layout.addStretch(3)
+
+        v_layout = QVBoxLayout()
         v_layout.setAlignment(Qt.AlignCenter)
         label = QLabel("Пересечение карт W0 (зелёные клетки – достижимы из всех входов)")
         label.setAlignment(Qt.AlignCenter)
         v_layout.addWidget(label)
         widget = MatrixWidget(self.W0)
         v_layout.addWidget(widget)
-        self.display_layout.addWidget(container, 1)
+        h_layout.addLayout(v_layout, 4)
+
+        h_layout.addStretch(3)
+        h_container.setLayout(h_layout)
+
+        self.display_layout.addWidget(h_container, 1)
         self.display_layout.addStretch()
+
         self.info_label.setText("Этап 2 выполнен. Теперь можно запустить финальную волну (Этап 3).")
         self.btn_stage3.setEnabled(True)
 
@@ -275,18 +297,29 @@ class MultipleExitsWidget(QWidget):
         self.final_anim_step = 0
         self.final_anim_total = tau
         self.clear_layout(self.display_layout)
+
         self.display_layout.addStretch()
-        container = QWidget()
-        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.final_anim_layout = QVBoxLayout(container)
-        self.final_anim_layout.setAlignment(Qt.AlignCenter)
+
+        h_container = QWidget()
+        h_layout = QHBoxLayout(h_container)
+        h_layout.setAlignment(Qt.AlignCenter)
+        h_layout.addStretch(3)
+
+        v_layout = QVBoxLayout()
+        v_layout.setAlignment(Qt.AlignCenter)
         label = QLabel(f"Финальная волна (шаг 0 из {tau})")
         label.setAlignment(Qt.AlignCenter)
-        self.final_anim_layout.addWidget(label)
+        v_layout.addWidget(label)
         self.final_widget = MatrixWidget(self.final_anim_mat)
-        self.final_anim_layout.addWidget(self.final_widget)
-        self.display_layout.addWidget(container, 1)
+        v_layout.addWidget(self.final_widget)
+        h_layout.addLayout(v_layout, 4)
+
+        h_layout.addStretch(3)
+        h_container.setLayout(h_layout)
+
+        self.display_layout.addWidget(h_container, 1)
         self.display_layout.addStretch()
+
         self.timer_stage3.start(300)
         self.btn_stage3.setEnabled(False)
         self.btn_stage2.setEnabled(False)
@@ -327,11 +360,17 @@ class MultipleExitsWidget(QWidget):
         self.timer_stage1.stop()
         self.timer_stage3.stop()
         self.clear_layout(self.display_layout)
-        # Отображение загруженных карт с центрированием и масштабированием
+
+        # Вертикальное центрирование
         self.display_layout.addStretch()
+
+        # Горизонтальный контейнер с ограничением ширины 40%
         h_container = QWidget()
         h_layout = QHBoxLayout(h_container)
         h_layout.setAlignment(Qt.AlignCenter)
+        h_layout.setSpacing(15)
+        h_layout.addStretch(3)
+
         for idx, mat in enumerate(self.matrices):
             col_layout = QVBoxLayout()
             col_layout.setAlignment(Qt.AlignCenter)
@@ -340,10 +379,14 @@ class MultipleExitsWidget(QWidget):
             col_layout.addWidget(label)
             widget = MatrixWidget(mat)
             col_layout.addWidget(widget)
-            h_layout.addLayout(col_layout, 1)
+            h_layout.addLayout(col_layout, 4)
+
+        h_layout.addStretch(3)
         h_container.setLayout(h_layout)
+
         self.display_layout.addWidget(h_container, 1)
         self.display_layout.addStretch()
+
         self.info_label.setText(f"Загружено {len(self.matrices)} карт. Нажмите 'Этап 1'.")
         self.btn_stage1.setEnabled(True)
         self.btn_stage2.setEnabled(False)
